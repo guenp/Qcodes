@@ -187,8 +187,8 @@ def test_do0d_verify_shape(_param, _param_complex, multiparamtype,
     for i, name in enumerate(multiparam.full_names):
         expected_shapes[name] = tuple(multiparam.shapes[i])
     expected_shapes['arrayparam'] = tuple(arrayparam.shape)
-    expected_shapes['simple_parameter'] = ()
-    expected_shapes['simple_complex_parameter'] = ()
+    expected_shapes['simple_parameter'] = (1,)
+    expected_shapes['simple_complex_parameter'] = (1,)
     expected_shapes[paramwsetpoints.full_name] = (n_points_pws, )
     assert results[0].description.shapes == expected_shapes
 
@@ -226,6 +226,7 @@ def test_do0d_explicit_experiment(_param, experiment):
 def test_do0d_explicit_name(_param, experiment):
     data1 = do0d(_param, do_plot=False, measurement_name="my measurement")
     assert data1[0].name == "my measurement"
+
 
 @pytest.mark.usefixtures("plot_close", "experiment")
 @pytest.mark.parametrize('delay', [0, 0.1, 1])
@@ -308,6 +309,20 @@ def test_do1d_output_data(_param, _param_set):
 
     np.testing.assert_array_equal(loaded_data[_param.name], np.ones(5))
     np.testing.assert_array_equal(loaded_data[_param_set.name], np.linspace(0, 1, 5))
+
+
+def test_do0d_parameter_with_setpoints_2d(dummyinstrument):
+    dummyinstrument.A.dummy_start(0)
+    dummyinstrument.A.dummy_stop(10)
+    dummyinstrument.A.dummy_n_points(10)
+    dummyinstrument.A.dummy_start_2(2)
+    dummyinstrument.A.dummy_stop_2(7)
+    dummyinstrument.A.dummy_n_points_2(3)
+    dataset, _, _ = do0d(dummyinstrument.A.dummy_parameter_with_setpoints_2d)
+
+    data = dataset.cache.data()['dummyinstrument_ChanA_dummy_parameter_with_setpoints_2d']
+    for array in data.values():
+        assert array.shape == (10, 3)
 
 
 @pytest.mark.usefixtures("experiment")
