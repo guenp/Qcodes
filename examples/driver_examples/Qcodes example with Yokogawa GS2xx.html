@@ -40,7 +40,7 @@
     
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="QCoDeS Example with ZI UHF-LI" href="Qcodes%20example%20with%20ZI%20UHF-LI.html" />
+    <link rel="next" title="QCoDeS Example with Tektronix Keithley 2450 Source Meter" href="Qcodes%20example%20with%20keithley%202450.html" />
     <link rel="prev" title="QCoDeS Example with Tektronix TPS2012" href="Qcodes%20example%20with%20Tektronix%20TPS2012.html" />
     <link href="../../_static/style.css" rel="stylesheet" type="text/css">
 
@@ -67,7 +67,7 @@
             
             
               <div class="version">
-                0.23.0.dev1+196.g8f25835826
+                0.23.0.dev1+586.g9812dcfc2f
               </div>
             
           
@@ -152,7 +152,6 @@
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Tektronix%20AWG70002A.html">QCoDeS Example with Tektronix AWG70002A</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Tektronix%20TPS2012.html">QCoDeS Example with Tektronix TPS2012</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">QCoDeS Example with Yokogawa GS200/GS210</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20ZI%20UHF-LI.html">QCoDeS Example with ZI UHF-LI</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20keithley%202450.html">QCoDeS Example with Tektronix Keithley 2450 Source Meter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%2Bbroadbean%20example%20with%20Tektronix%20AWG5208.html">QCoDeS+Broadbean Example with Tektronix AWG5208</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes-example-with-Signal-Hound-USB-SA124B.html">QCoDeS Example with Signal Hound USB-SA124B</a></li>
@@ -1098,8 +1097,8 @@ The current value is withing the present current_range
 Exception is correctly raised. The value is out of the present range of 0.01 A.
 </pre></div></div>
 </div>
-<p>auto_range can be used to set the value even if the value is out of the present range. If the value exceeds the present range, the range automatically switches to the higher range tier untill the maximum allowed limit is reached (0.2 A for current and 30 V for voltage). auto_range can be useful when one wants to ramp the value without worrying about the end value to be out of the present range. We ramp the current from 0.009 A to 0.02 A with the step of 0.001 A (delay between each step is set
-to 1 second) and time it. Our present range is 0.01 A, so we expect the range automatically switches to 0.1 A because of auto_range is True.</p>
+<p>auto_range can be used to set the value even if the value is out of the present range. If the value exceeds the present range, the range automatically switches to the higher range tier untill the maximum allowed limit is reached (0.2 A for current and 30 V for voltage). auto_range can be useful when one wants to ramp the value without worrying about the end value to be out of the present range. We ramp the current from 0.009 A to 0.02 A with the step of 0.001 A (delay between each step is set to
+1 second) and time it. Our present range is 0.01 A, so we expect the range automatically switches to 0.1 A because of auto_range is True.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
@@ -1398,7 +1397,7 @@ False
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="Qcodes%20example%20with%20ZI%20UHF-LI.html" class="btn btn-neutral float-right" title="QCoDeS Example with ZI UHF-LI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Qcodes%20example%20with%20keithley%202450.html" class="btn btn-neutral float-right" title="QCoDeS Example with Tektronix Keithley 2450 Source Meter" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="Qcodes%20example%20with%20Tektronix%20TPS2012.html" class="btn btn-neutral float-left" title="QCoDeS Example with Tektronix TPS2012" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 

@@ -67,7 +67,7 @@
             
             
               <div class="version">
-                0.23.0.dev1+196.g8f25835826
+                0.23.0.dev1+586.g9812dcfc2f
               </div>
             
           
@@ -117,7 +117,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#Example:-Weinschel_8320">Example: Weinschel_8320</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Congratulations!-That-was-it.">Congratulations! That was it.</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Bonus-example:-including-parameters-in-the-simulated-instrument">Bonus example: including parameters in the simulated instrument</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#That's-it!">That’s it!</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#That’s-it!">That’s it!</a></li>
 </ul>
 </li>
 </ul>
@@ -493,7 +493,7 @@ alt="Binder badge"
 </div><div class="section" id="Creating-Simulated-PyVISA-Instruments">
 <h1>Creating Simulated PyVISA Instruments<a class="headerlink" href="#Creating-Simulated-PyVISA-Instruments" title="Permalink to this headline">¶</a></h1>
 <p>When developing stuff in a large codebase like QCoDeS, it is often uncanningly easy to submit a change that breaks stuff. Therefore, <em>continuous integration</em> is performed in the form of automated tests that run before new code is allowed into the codebase. The many tests of QCoDeS can be found in <code class="docutils literal notranslate"><span class="pre">qcodes.tests</span></code>.</p>
-<p>But how about drivers? They constitute the majority of the codebase, but how can we test them? Wouldn’t that require a physical copy each instrument to be present on the California server where we run our tests? It used to be so, but not anymore! For drivers utilising PyVISA (i.e. <code class="docutils literal notranslate"><span class="pre">VisaInstrument</span></code> drivers), we may create simulated instruments to which the drivers may connect.</p>
+<p>But how about drivers? They constitute the majority of the codebase, but how can we test them? Wouldn’t that require a physical copy each instrument to be present on the California server where we run our tests? It used to be so, but not anymore! For drivers utilising PyVISA (i.e. <code class="docutils literal notranslate"><span class="pre">VisaInstrument</span></code> drivers), we may create simulated instruments to which the drivers may connect.</p>
 <div class="section" id="What?">
 <h2>What?<a class="headerlink" href="#What?" title="Permalink to this headline">¶</a></h2>
 <p>This way, we may instantiate drivers and run simple tests on them. Tests like:</p>
@@ -555,22 +555,22 @@ alt="Binder badge"
 <div class="section" id="The-.yaml-file">
 <h3>The <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> file<a class="headerlink" href="#The-.yaml-file" title="Permalink to this headline">¶</a></h3>
 <p>The simplest <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> file that is still useful, reads, in all its glory:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span><span class="p">:</span> <span class="s2">&quot;1.0&quot;</span>
-<span class="n">devices</span><span class="p">:</span>
-  <span class="n">device</span> <span class="mi">1</span><span class="p">:</span>
-    <span class="n">eom</span><span class="p">:</span>
-      <span class="n">GPIB</span> <span class="n">INSTR</span><span class="p">:</span>
-        <span class="n">q</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\r</span><span class="s2">&quot;</span>  <span class="c1"># MAKE SURE! that this matches the terminator of the driver!</span>
-        <span class="n">r</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\r</span><span class="s2">&quot;</span>
-    <span class="n">error</span><span class="p">:</span> <span class="n">ERROR</span>
-    <span class="n">dialogues</span><span class="p">:</span>
-      <span class="o">-</span> <span class="n">q</span><span class="p">:</span> <span class="s2">&quot;*IDN?&quot;</span>
-        <span class="n">r</span><span class="p">:</span> <span class="s2">&quot;QCoDeS, Weinschel 8320 (Simulated), 1337, 0.0.01&quot;</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>spec: &quot;1.0&quot;
+devices:
+  device 1:
+    eom:
+      GPIB INSTR:
+        q: &quot;\r&quot;  # MAKE SURE! that this matches the terminator of the driver!
+        r: &quot;\r&quot;
+    error: ERROR
+    dialogues:
+      - q: &quot;*IDN?&quot;
+        r: &quot;QCoDeS, Weinschel 8320 (Simulated), 1337, 0.0.01&quot;
 
 
-<span class="n">resources</span><span class="p">:</span>
-  <span class="n">GPIB</span><span class="p">::</span><span class="mi">1</span><span class="p">::</span><span class="n">INSTR</span><span class="p">:</span>
-    <span class="n">device</span><span class="p">:</span> <span class="n">device</span> <span class="mi">1</span>
+resources:
+  GPIB::1::INSTR:
+    device: device 1
 </pre></div>
 </div>
 <p>Note that since no physical connection is made, it doesn’t matter what interface we pretend to use (GPIB, USB, ethernet, serial, …). As a convention, we always write GPIB in the <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> files.</p>
@@ -644,11 +644,11 @@ Connected to: QCoDeS Weinschel 8320 (Simulated) (serial:1337, firmware:0.0.01) i
 </div>
 <p>Save the test as <code class="docutils literal notranslate"><span class="pre">qcodes/tests/drivers/test_weinschel_8320.py</span></code>.</p>
 <p>Open a command line/console/terminal, navigate to the <code class="docutils literal notranslate"><span class="pre">qcodes/tests/drivers/</span></code> folder and run</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">pytest</span> <span class="n">test_weinschel_8320</span><span class="o">.</span><span class="n">py</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt; pytest test_weinschel_8320.py
 </pre></div>
 </div>
 <p>This should give you an output similar to</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">=========================================</span> <span class="mi">1</span> <span class="n">passed</span> <span class="ow">in</span> <span class="mf">0.73</span> <span class="n">seconds</span> <span class="o">==========================================</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>========================================= 1 passed in 0.73 seconds ==========================================
 </pre></div>
 </div>
 </div>
@@ -658,34 +658,34 @@ Connected to: QCoDeS Weinschel 8320 (Simulated) (serial:1337, firmware:0.0.01) i
 </div>
 <div class="section" id="Bonus-example:-including-parameters-in-the-simulated-instrument">
 <h2>Bonus example: including parameters in the simulated instrument<a class="headerlink" href="#Bonus-example:-including-parameters-in-the-simulated-instrument" title="Permalink to this headline">¶</a></h2>
-<p>It is also possible to add queriable parameters to the <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> file, but testing that you can read those back is of limited value. You should only add them if your driver needs them to instantiate, e.g. if it checks that some range or impedance is configured correctly on startup, or - more generally - if a part of your driver code that you’d like to test needs it to run.</p>
+<p>It is also possible to add queriable parameters to the <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> file, but testing that you can read those back is of limited value. You should only add them if your driver needs them to instantiate, e.g. if it checks that some range or impedance is configured correctly on startup, or - more generally - if a part of your driver code that you’d like to test needs it to run.</p>
 <p>For the sake of this example, let us add a test that the driver’s parameter’s validator will reject an attenuation of less than 0 dBm. Note that this concrete test is redundant, since we have separate tests for validators. It is, however, an excellent example to learn from.</p>
 <p>First we update the <code class="docutils literal notranslate"><span class="pre">.yaml</span></code> file to contain a property matching the parameter.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span><span class="p">:</span> <span class="s2">&quot;1.0&quot;</span>
-<span class="n">devices</span><span class="p">:</span>
-  <span class="n">device</span> <span class="mi">1</span><span class="p">:</span>
-    <span class="n">eom</span><span class="p">:</span>
-      <span class="n">GPIB</span> <span class="n">INSTR</span><span class="p">:</span>
-        <span class="n">q</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\r</span><span class="s2">&quot;</span>  <span class="c1"># MAKE SURE! that this matches the terminator of the driver!</span>
-        <span class="n">r</span><span class="p">:</span> <span class="s2">&quot;</span><span class="se">\r</span><span class="s2">&quot;</span>
-    <span class="n">error</span><span class="p">:</span> <span class="n">ERROR</span>
-    <span class="n">dialogues</span><span class="p">:</span>
-      <span class="o">-</span> <span class="n">q</span><span class="p">:</span> <span class="s2">&quot;*IDN?&quot;</span>
-        <span class="n">r</span><span class="p">:</span> <span class="s2">&quot;QCoDeS, Weinschel 8320 (Simulated), 1337, 0.0.01&quot;</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>spec: &quot;1.0&quot;
+devices:
+  device 1:
+    eom:
+      GPIB INSTR:
+        q: &quot;\r&quot;  # MAKE SURE! that this matches the terminator of the driver!
+        r: &quot;\r&quot;
+    error: ERROR
+    dialogues:
+      - q: &quot;*IDN?&quot;
+        r: &quot;QCoDeS, Weinschel 8320 (Simulated), 1337, 0.0.01&quot;
 
-    <span class="n">properties</span><span class="p">:</span>
+    properties:
 
-      <span class="n">attenuation</span><span class="p">:</span>
-        <span class="n">default</span><span class="p">:</span> <span class="mi">0</span>
-        <span class="n">getter</span><span class="p">:</span>
-          <span class="n">q</span><span class="p">:</span> <span class="s2">&quot;ATTN? 1&quot;</span>  <span class="c1"># the set/get commands have to simply be copied over from the driver</span>
-          <span class="n">r</span><span class="p">:</span> <span class="s2">&quot;</span><span class="si">{:02.0f}</span><span class="s2">&quot;</span>
-        <span class="n">setter</span><span class="p">:</span>
-          <span class="n">q</span><span class="p">:</span> <span class="s2">&quot;ATTN ALL </span><span class="si">{:02.0f}</span><span class="s2">&quot;</span>
+      attenuation:
+        default: 0
+        getter:
+          q: &quot;ATTN? 1&quot;  # the set/get commands have to simply be copied over from the driver
+          r: &quot;{:02.0f}&quot;
+        setter:
+          q: &quot;ATTN ALL {:02.0f}&quot;
 
-<span class="n">resources</span><span class="p">:</span>
-  <span class="n">GPIB</span><span class="p">::</span><span class="mi">1</span><span class="p">::</span><span class="n">INSTR</span><span class="p">:</span>
-    <span class="n">device</span><span class="p">:</span> <span class="n">device</span> <span class="mi">1</span>
+resources:
+  GPIB::1::INSTR:
+    device: device 1
 </pre></div>
 </div>
 <p>Notice that we don’t include the the <code class="docutils literal notranslate"><span class="pre">r:</span> <span class="pre">OK</span></code> as the response of setting a property. This is in contrast to what <a class="reference external" href="https://pyvisa-sim.readthedocs.io/en/latest/definitions.html#properties">https://pyvisa-sim.readthedocs.io/en/latest/definitions.html#properties</a> does. The response of a successful setting of a parameter will not return ‘OK’.</p>
@@ -741,16 +741,16 @@ Connected to: QCoDeS Weinschel 8320 (Simulated) (serial:1337, firmware:0.0.01) i
 </div>
 </div>
 <p>Open a command line/console/terminal, navigate to the <code class="docutils literal notranslate"><span class="pre">qcodes/tests/drivers/</span></code> folder and run</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">pytest</span> <span class="n">test_weinschel_8320</span><span class="o">.</span><span class="n">py</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;&gt; pytest test_weinschel_8320.py
 </pre></div>
 </div>
 <p>This should give you an output similar to</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">=========================================</span> <span class="mi">2</span> <span class="n">passed</span> <span class="ow">in</span> <span class="mf">0.73</span> <span class="n">seconds</span> <span class="o">==========================================</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>========================================= 2 passed in 0.73 seconds ==========================================
 </pre></div>
 </div>
 </div>
-<div class="section" id="That's-it!">
-<h2>That’s it!<a class="headerlink" href="#That's-it!" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="That’s-it!">
+<h2>That’s it!<a class="headerlink" href="#That’s-it!" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 

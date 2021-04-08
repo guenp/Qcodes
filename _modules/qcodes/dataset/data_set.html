@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                0.23.0.dev1+196.g8f25835826
+                0.23.0.dev1+586.g9812dcfc2f
               </div>
             
           
@@ -166,22 +166,23 @@
            <div itemprop="articleBody">
             
   <h1>Source code for qcodes.dataset.data_set</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">functools</span>
-<span class="kn">import</span> <span class="nn">importlib</span>
+<span></span><span class="kn">import</span> <span class="nn">importlib</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
+
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="nn">queue</span> <span class="kn">import</span> <span class="n">Empty</span><span class="p">,</span> <span class="n">Queue</span>
+<span class="kn">from</span> <span class="nn">queue</span> <span class="kn">import</span> <span class="n">Queue</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Thread</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span>
                     <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span>
                     <span class="n">Sized</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">cast</span><span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">import</span> <span class="nn">qcodes</span>
 <span class="kn">from</span> <span class="nn">qcodes.dataset.descriptions.dependencies</span> <span class="kn">import</span> <span class="n">InterDependencies_</span>
@@ -215,9 +216,10 @@
                                                  <span class="n">select_one_where</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">qcodes.instrument.parameter</span> <span class="kn">import</span> <span class="n">_BaseParameter</span>
 <span class="kn">from</span> <span class="nn">qcodes.utils.deprecate</span> <span class="kn">import</span> <span class="n">deprecate</span>
-
+<span class="kn">from</span> <span class="nn">qcodes.dataset.export_config</span> <span class="kn">import</span> <span class="n">DataExportType</span><span class="p">,</span> <span class="n">get_data_export_type</span><span class="p">,</span> <span class="n">get_data_export_path</span><span class="p">,</span> <span class="n">get_data_export_prefix</span><span class="p">,</span> <span class="n">get_data_export_automatic</span>
 <span class="kn">from</span> <span class="nn">.data_set_cache</span> <span class="kn">import</span> <span class="n">DataSetCache</span>
 <span class="kn">from</span> <span class="nn">.descriptions.versioning</span> <span class="kn">import</span> <span class="n">serialization</span> <span class="k">as</span> <span class="n">serial</span>
+<span class="kn">from</span> <span class="nn">.subscriber</span> <span class="kn">import</span> <span class="n">_Subscriber</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -265,121 +267,6 @@
 
 <div class="viewcode-block" id="DataPathException"><a class="viewcode-back" href="../../../api/dataset/data_set.html#qcodes.dataset.data_set.DataPathException">[docs]</a><span class="k">class</span> <span class="nc">DataPathException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">pass</span></div>
-
-
-<span class="k">class</span> <span class="nc">_Subscriber</span><span class="p">(</span><span class="n">Thread</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Class to add a subscriber to a :class:`.DataSet`. The subscriber gets called every</span>
-<span class="sd">    time an insert is made to the results_table.</span>
-
-<span class="sd">    The _Subscriber is not meant to be instantiated directly, but rather used</span>
-<span class="sd">    via the &#39;subscribe&#39; method of the :class:`.DataSet`.</span>
-
-<span class="sd">    NOTE: A subscriber should be added *after* all parameters have been added.</span>
-
-<span class="sd">    NOTE: Special care shall be taken when using the *state* object: it is the</span>
-<span class="sd">    user&#39;s responsibility to operate with it in a thread-safe way.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                 <span class="n">dataSet</span><span class="p">:</span> <span class="s1">&#39;DataSet&#39;</span><span class="p">,</span>
-                 <span class="n">id_</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-                 <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
-                 <span class="n">state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                 <span class="n">loop_sleep_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># in milliseconds</span>
-                 <span class="n">min_queue_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-                 <span class="n">callback_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-                 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_id</span> <span class="o">=</span> <span class="n">id_</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span> <span class="o">=</span> <span class="n">dataSet</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">table_name</span> <span class="o">=</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">table_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data_set_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataSet</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">data_queue</span><span class="p">:</span> <span class="s2">&quot;Queue[Any]&quot;</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_queue_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_signal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="c1"># convert milliseconds to seconds</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop_sleep_time</span> <span class="o">=</span> <span class="n">loop_sleep_time</span> <span class="o">/</span> <span class="mi">1000</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">min_queue_length</span> <span class="o">=</span> <span class="n">min_queue_length</span>
-
-        <span class="k">if</span> <span class="n">callback_kwargs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">callback_kwargs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">callback</span><span class="p">,</span> <span class="o">**</span><span class="n">callback_kwargs</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">callback_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;callback</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">trigger_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;sub</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="si">}</span><span class="s2">&quot;</span>
-
-        <span class="n">conn</span> <span class="o">=</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">conn</span>
-
-        <span class="n">conn</span><span class="o">.</span><span class="n">create_function</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">callback_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache_data_to_queue</span><span class="p">)</span>
-
-        <span class="n">parameters</span> <span class="o">=</span> <span class="n">dataSet</span><span class="o">.</span><span class="n">get_parameters</span><span class="p">()</span>
-        <span class="n">sql_param_list</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;NEW.</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">])</span>
-        <span class="n">sql_create_trigger_for_callback</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        CREATE TRIGGER </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">trigger_id</span><span class="si">}</span><span class="s2"></span>
-<span class="s2">            AFTER INSERT ON &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="si">}</span><span class="s2">&#39;</span>
-<span class="s2">        BEGIN</span>
-<span class="s2">            SELECT </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">callback_id</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">sql_param_list</span><span class="si">}</span><span class="s2">);</span>
-<span class="s2">        END;&quot;&quot;&quot;</span>
-        <span class="n">atomic_transaction</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">sql_create_trigger_for_callback</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_Subscriber </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_cache_data_to_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data_set_len</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_queue_length</span> <span class="o">+=</span> <span class="mi">1</span>
-
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Starting subscriber&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">()</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_exhaust_queue</span><span class="p">(</span><span class="n">queue</span><span class="p">:</span> <span class="s2">&quot;Queue[Any]&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-        <span class="n">result_list</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">result_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
-            <span class="k">except</span> <span class="n">Empty</span><span class="p">:</span>
-                <span class="k">break</span>
-        <span class="k">return</span> <span class="n">result_list</span>
-
-    <span class="k">def</span> <span class="nf">_call_callback_on_queue_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">result_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exhaust_queue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_queue</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">result_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_set_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_signal</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_clean_up</span><span class="p">()</span>
-                <span class="k">break</span>
-
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_queue_length</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_queue_length</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_call_callback_on_queue_data</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_queue_length</span> <span class="o">=</span> <span class="mi">0</span>
-
-            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_loop_sleep_time</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSet</span><span class="o">.</span><span class="n">completed</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_call_callback_on_queue_data</span><span class="p">()</span>
-                <span class="k">break</span>
-
-    <span class="k">def</span> <span class="nf">done_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_call_callback_on_queue_data</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">schedule_stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_signal</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Scheduling stop&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_stop_signal</span> <span class="o">=</span> <span class="kc">True</span>
-
-    <span class="k">def</span> <span class="nf">_clean_up</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Stopped subscriber&quot;</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">_BackgroundWriter</span><span class="p">(</span><span class="n">Thread</span><span class="p">):</span>
@@ -504,6 +391,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span> <span class="n">DataSetCache</span> <span class="o">=</span> <span class="n">DataSetCache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">VALUE</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_in_memory_cache</span> <span class="o">=</span> <span class="n">in_memory_cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_export_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">run_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">run_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="p">,</span> <span class="n">run_id</span><span class="p">):</span>
@@ -1318,6 +1206,10 @@
 <span class="sd">        of the :class:`.DataSet` – then a dict of empty :py:class:`xr.DataArray` s is</span>
 <span class="sd">        returned.</span>
 
+<span class="sd">        The dependent parameters of the Dataset are normally used as coordinates of the</span>
+<span class="sd">        XArray dataframe. However if non unique values are found for the dependent parameter</span>
+<span class="sd">        values we will fall back to using an index as coordinates.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            *params: string parameter names, QCoDeS Parameter objects, and</span>
 <span class="sd">                ParamSpec objects. If no parameters are supplied data for</span>
@@ -1341,7 +1233,11 @@
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter_data</span><span class="p">(</span><span class="o">*</span><span class="n">params</span><span class="p">,</span>
                                        <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
                                        <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_to_xarray_dataarray_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+        <span class="n">datadict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_to_xarray_dataarray_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">dataarray</span> <span class="ow">in</span> <span class="n">datadict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_metadata_to_xarray</span><span class="p">(</span><span class="n">dataarray</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">datadict</span></div>
 
 <div class="viewcode-block" id="DataSet.to_xarray_dataset"><a class="viewcode-back" href="../../../api/dataset/data_set.html#qcodes.dataset.data_set.DataSet.to_xarray_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">to_xarray_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span>
                                                <span class="n">ParamSpec</span><span class="p">,</span>
@@ -1361,6 +1257,10 @@
 <span class="sd">        less than or equal to the start, or if start is after the current end</span>
 <span class="sd">        of the :class:`.DataSet` – then a empty :py:class:`xr.Dataset` s is</span>
 <span class="sd">        returned.</span>
+
+<span class="sd">        The dependent parameters of the Dataset are normally used as coordinates of the</span>
+<span class="sd">        XArray dataframe. However if non unique values are found for the dependent parameter</span>
+<span class="sd">        values we will fall back to using an index as coordinates.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            *params: string parameter names, QCoDeS Parameter objects, and</span>
@@ -1406,13 +1306,41 @@
             <span class="n">cast</span><span class="p">(</span><span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">data_xrdarray_dict</span><span class="p">))</span>
 
         <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">xrdataset</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
-            <span class="n">paramspec_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paramspecs</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">dim</span><span class="p">)]</span><span class="o">.</span><span class="n">_to_dict</span><span class="p">()</span>
-            <span class="n">xrdataset</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">dim</span><span class="p">)]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">paramspec_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="k">if</span> <span class="s2">&quot;index&quot;</span> <span class="o">!=</span> <span class="n">dim</span><span class="p">:</span>
+                <span class="n">paramspec_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paramspecs</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">dim</span><span class="p">)]</span><span class="o">.</span><span class="n">_to_dict</span><span class="p">()</span>
+                <span class="n">xrdataset</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">dim</span><span class="p">)]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">paramspec_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 
-        <span class="n">xrdataset</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;sample_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_name</span>
-        <span class="n">xrdataset</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;exp_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_metadata_to_xarray</span><span class="p">(</span><span class="n">xrdataset</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">xrdataset</span>
+
+    <span class="k">def</span> <span class="nf">_add_metadata_to_xarray</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">xrdataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;xr.Dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;xr.DataArray&quot;</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">xrdataset</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s2">&quot;ds_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;sample_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_name</span><span class="p">,</span>
+            <span class="s2">&quot;exp_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_name</span><span class="p">,</span>
+            <span class="s2">&quot;snapshot&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_raw</span> <span class="ow">or</span> <span class="s2">&quot;null&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;guid&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">guid</span><span class="p">,</span>
+            <span class="s2">&quot;run_timestamp&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_timestamp</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;completed_timestamp&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_timestamp</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;captured_run_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">captured_run_id</span><span class="p">,</span>
+            <span class="s2">&quot;captured_counter&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">captured_counter</span><span class="p">,</span>
+            <span class="s2">&quot;run_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="p">,</span>
+            <span class="s2">&quot;run_description&quot;</span><span class="p">:</span> <span class="n">serial</span><span class="o">.</span><span class="n">to_json_for_storage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+        <span class="p">})</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_timestamp_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">xrdataset</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;run_timestamp_raw&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_timestamp_raw</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_timestamp_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">xrdataset</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span>
+                <span class="s2">&quot;completed_timestamp_raw&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_timestamp_raw</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">xrdataset</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;extra_metadata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">metadata_tag</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">xrdataset</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;extra_metadata&#39;</span><span class="p">][</span><span class="n">metadata_tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_data_to_dataframe</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;pd.Index&quot;</span><span class="p">,</span> <span class="s2">&quot;pd.MultiIndex&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;pd.DataFrame&quot;</span><span class="p">:</span>
@@ -1469,11 +1397,18 @@
 
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">subdict</span> <span class="ow">in</span> <span class="n">datadict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_pandas_index</span><span class="p">(</span><span class="n">subdict</span><span class="p">)</span>
-            <span class="n">xrdarray</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_dataframe</span><span class="p">(</span>
-                <span class="n">subdict</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">()[</span><span class="n">name</span><span class="p">]</span>
-            <span class="n">paramspec_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paramspecs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_to_dict</span><span class="p">()</span>
-            <span class="n">xrdarray</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">paramspec_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
-            <span class="n">data_xrdarray_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">xrdarray</span>
+            <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">_name</span> <span class="ow">in</span> <span class="n">subdict</span><span class="p">:</span>
+                    <span class="n">data_xrdarray_dict</span><span class="p">[</span><span class="n">_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_dataframe</span><span class="p">(</span>
+                        <span class="n">subdict</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">()[</span><span class="n">_name</span><span class="p">]</span>
+                    <span class="n">paramspec_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paramspecs</span><span class="p">[</span><span class="n">_name</span><span class="p">]</span><span class="o">.</span><span class="n">_to_dict</span><span class="p">()</span>
+                    <span class="n">data_xrdarray_dict</span><span class="p">[</span><span class="n">_name</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">paramspec_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">xrdarray</span><span class="p">:</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_to_dataframe</span><span class="p">(</span>
+                    <span class="n">subdict</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">to_xarray</span><span class="p">()[</span><span class="n">name</span><span class="p">]</span>
+                <span class="n">data_xrdarray_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">xrdarray</span>
+                <span class="n">paramspec_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">paramspecs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">_to_dict</span><span class="p">()</span>
+                <span class="n">xrdarray</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">paramspec_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 
         <span class="k">return</span> <span class="n">data_xrdarray_dict</span>
 
@@ -1506,6 +1441,8 @@
 <span class="sd">            single_file: If true, merges the data of same length of multiple</span>
 <span class="sd">                         dependent parameters to a single file.</span>
 <span class="sd">            single_file_name: User defined name for the data to be concatenated.</span>
+<span class="sd">                              If no extension is passed (.dat, .csv or .txt),</span>
+<span class="sd">                              .dat is automatically appended.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            DataLengthException: If the data of multiple parameters have not same</span>
@@ -1528,11 +1465,13 @@
                 <span class="k">raise</span> <span class="n">DataLengthException</span><span class="p">(</span><span class="s2">&quot;You cannot concatenate data &quot;</span> <span class="o">+</span>
                                           <span class="s2">&quot;with different length to a &quot;</span> <span class="o">+</span>
                                           <span class="s2">&quot;single file.&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">single_file_name</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">single_file_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">DataPathException</span><span class="p">(</span><span class="s2">&quot;Please provide the desired file name &quot;</span> <span class="o">+</span>
                                         <span class="s2">&quot;for the concatenated data.&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">single_file_name</span><span class="si">}</span><span class="s1">.dat&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">single_file_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;.dat&#39;</span><span class="p">,</span> <span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;.txt&#39;</span><span class="p">)):</span>
+                    <span class="n">single_file_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">single_file_name</span><span class="si">}</span><span class="s1">.dat&#39;</span>
+                <span class="n">dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">single_file_name</span><span class="p">)</span>
                 <span class="n">df_to_save</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dfs_to_save</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">df_to_save</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">path_or_buf</span><span class="o">=</span><span class="n">dst</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span></div>
 
@@ -1859,7 +1798,95 @@
 
         <span class="k">if</span> <span class="n">writer_status</span><span class="o">.</span><span class="n">write_in_background</span> <span class="ow">and</span> <span class="n">block</span><span class="p">:</span>
             <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Waiting for write queue to empty.&quot;</span><span class="p">)</span>
-            <span class="n">writer_status</span><span class="o">.</span><span class="n">data_write_queue</span><span class="o">.</span><span class="n">join</span><span class="p">()</span></div>
+            <span class="n">writer_status</span><span class="o">.</span><span class="n">data_write_queue</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_export_file_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">export_type</span><span class="p">:</span> <span class="n">DataExportType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get export file name&quot;&quot;&quot;</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="n">export_type</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">run_id</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_export_as_netcdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Export data as netcdf to a given path with file prefix&quot;&quot;&quot;</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+        <span class="n">xarr_dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_xarray_dataset</span><span class="p">()</span>
+        <span class="n">xarr_dataset</span><span class="o">.</span><span class="n">to_netcdf</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">def</span> <span class="nf">_export_as_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Export data as csv to a given path with file prefix&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_data_to_text_file</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">single_file</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">single_file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_export_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                     <span class="n">export_type</span><span class="p">:</span> <span class="n">DataExportType</span><span class="p">,</span>
+                     <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                     <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Export data to disk with file name {prefix}{run_id}.{ext}.</span>
+<span class="sd">        Values for the export type, path and prefix can also be set in the qcodes</span>
+<span class="sd">        &quot;dataset&quot; config.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            export_type: Data export type, e.g. DataExportType.NETCDF</span>
+<span class="sd">            path: Export path, defaults to value set in config</span>
+<span class="sd">            prefix: File prefix, e.g. &quot;qcodes_&quot;, defaults to value set in config.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Path file was saved to, returns None if no file was saved.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Set defaults to values in config if the value was not set</span>
+        <span class="c1"># (defaults to None)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_data_export_path</span><span class="p">()</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_data_export_prefix</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">DataExportType</span><span class="o">.</span><span class="n">NETCDF</span> <span class="o">==</span> <span class="n">export_type</span><span class="p">:</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_export_file_name</span><span class="p">(</span>
+                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">export_type</span><span class="o">=</span><span class="n">DataExportType</span><span class="o">.</span><span class="n">NETCDF</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_export_as_netcdf</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">DataExportType</span><span class="o">.</span><span class="n">CSV</span> <span class="o">==</span> <span class="n">export_type</span><span class="p">:</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_export_file_name</span><span class="p">(</span>
+                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span> <span class="n">export_type</span><span class="o">=</span><span class="n">DataExportType</span><span class="o">.</span><span class="n">CSV</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_export_as_csv</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="DataSet.export"><a class="viewcode-back" href="../../../api/dataset/data_set.html#qcodes.dataset.data_set.DataSet.export">[docs]</a>    <span class="k">def</span> <span class="nf">export</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+               <span class="n">export_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">DataExportType</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+               <span class="n">path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+               <span class="n">prefix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Export data to disk with file name {prefix}{run_id}.{ext}.</span>
+<span class="sd">        Values for the export type, path and prefix can also be set in the &quot;dataset&quot;</span>
+<span class="sd">        section of qcodes config.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            export_type: Data export type, e.g. &quot;netcdf&quot; or ``DataExportType.NETCDF``,</span>
+<span class="sd">                defaults to a value set in qcodes config</span>
+<span class="sd">            path: Export path, defaults to value set in config</span>
+<span class="sd">            prefix: File prefix, e.g. ``qcodes_``, defaults to value set in config.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the export data type is not specified, raise an error</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">export_type</span> <span class="o">=</span> <span class="n">get_data_export_type</span><span class="p">(</span><span class="n">export_type</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">export_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;No data export type specified. Please set the export data type &quot;</span>
+                <span class="s2">&quot;by using ``qcodes.dataset.export_config.set_data_export_type`` or &quot;</span>
+                <span class="s2">&quot;give an explicit export_type when calling ``dataset.export`` manually.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_export_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_export_data</span><span class="p">(</span>
+            <span class="n">export_type</span><span class="o">=</span><span class="n">export_type</span><span class="p">,</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span>
+        <span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">export_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_export_path</span></div>
 
 
 <span class="c1"># public api</span>

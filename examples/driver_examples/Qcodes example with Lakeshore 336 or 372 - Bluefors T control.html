@@ -67,7 +67,7 @@
             
             
               <div class="version">
-                0.23.0.dev1+196.g8f25835826
+                0.23.0.dev1+586.g9812dcfc2f
               </div>
             
           
@@ -160,7 +160,6 @@
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Tektronix%20AWG70002A.html">QCoDeS Example with Tektronix AWG70002A</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Tektronix%20TPS2012.html">QCoDeS Example with Tektronix TPS2012</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Yokogawa%20GS2xx.html">QCoDeS Example with Yokogawa GS200/GS210</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20ZI%20UHF-LI.html">QCoDeS Example with ZI UHF-LI</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20keithley%202450.html">QCoDeS Example with Tektronix Keithley 2450 Source Meter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%2Bbroadbean%20example%20with%20Tektronix%20AWG5208.html">QCoDeS+Broadbean Example with Tektronix AWG5208</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes-example-with-Signal-Hound-USB-SA124B.html">QCoDeS Example with Signal Hound USB-SA124B</a></li>
@@ -770,7 +769,7 @@ Temperature of ch16 (on): 4.0 kelvin
 </div>
 <div class="section" id="Working-with-closed-loop-control">
 <h3>Working with closed loop control<a class="headerlink" href="#Working-with-closed-loop-control" title="Permalink to this headline">¶</a></h3>
-<p>To use a closed loop control, we need to set the <code class="docutils literal notranslate"><span class="pre">P</span></code>, <code class="docutils literal notranslate"><span class="pre">I</span></code>, <code class="docutils literal notranslate"><span class="pre">D</span></code> values, choose an <code class="docutils literal notranslate"><span class="pre">input_channel</span></code> that will be read within the closed loop, set the range of the heater (<code class="docutils literal notranslate"><span class="pre">output_range</span></code>), set the <code class="docutils literal notranslate"><span class="pre">setpoint</span></code> value (e.g. the target temperature), and start the operation by setting <code class="docutils literal notranslate"><span class="pre">mode</span></code> to <code class="docutils literal notranslate"><span class="pre">closed_loop</span></code>.</p>
+<p>To use a closed loop control, we need to set the <code class="docutils literal notranslate"><span class="pre">P</span></code>, <code class="docutils literal notranslate"><span class="pre">I</span></code>, <code class="docutils literal notranslate"><span class="pre">D</span></code> values, choose an <code class="docutils literal notranslate"><span class="pre">input_channel</span></code> that will be read within the closed loop, set the range of the heater (<code class="docutils literal notranslate"><span class="pre">output_range</span></code>), set the <code class="docutils literal notranslate"><span class="pre">setpoint</span></code> value (e.g. the target temperature), and start the operation by setting <code class="docutils literal notranslate"><span class="pre">mode</span></code> to <code class="docutils literal notranslate"><span class="pre">closed_loop</span></code>.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
@@ -1845,7 +1844,7 @@ if (IPython.notebook.kernel != null) {
 </pre></div>
 </div>
 <p>This parameter can be used in a <code class="docutils literal notranslate"><span class="pre">doNd</span></code>-like loop.</p>
-<p>Note that the range only gets set at the beginning of the sweep, i.e. according to the setpoint not according to the temperature reading.</p>
+<p>Note that the range only gets set at the beginning of the sweep, i.e. according to the setpoint not according to the temperature reading.</p>
 </div>
 </div>
 

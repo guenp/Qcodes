@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                0.23.0.dev1+196.g8f25835826
+                0.23.0.dev1+586.g9812dcfc2f
               </div>
             
           
@@ -487,7 +487,8 @@
 
         <span class="c1"># Check we can ramp</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_can_start_ramping</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="n">AMI430Exception</span><span class="p">(</span><span class="s2">&quot;Cannot ramp in current state&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">AMI430Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot ramp in current state: &quot;</span>
+                                  <span class="sa">f</span><span class="s2">&quot;state is </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ramping_state</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="c1"># Then, do the actual ramp</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pause</span><span class="p">()</span>

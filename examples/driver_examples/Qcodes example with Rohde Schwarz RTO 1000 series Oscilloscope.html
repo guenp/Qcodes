@@ -67,7 +67,7 @@
             
             
               <div class="version">
-                0.23.0.dev1+196.g8f25835826
+                0.23.0.dev1+586.g9812dcfc2f
               </div>
             
           
@@ -147,10 +147,10 @@
 <li class="toctree-l4"><a class="reference internal" href="#A-signal-to-record">A signal to record</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Input-settings">Input settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Triggering">Triggering</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Acquisition-pt.-1-(running-continuously)">Acquisition pt. 1 (running continuously)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Acquisition-pt. 1-(running-continuously)">Acquisition pt. 1 (running continuously)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Horizontal-settings">Horizontal settings</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Vertical-settings">Vertical settings</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#Acquisition-pt.-2-(averaging)">Acquisition pt. 2 (averaging)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Acquisition-pt. 2-(averaging)">Acquisition pt. 2 (averaging)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Reading-out-the-trace---RUN-CONT">Reading out the trace - RUN CONT</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Reading-out-the-trace---RUN-Nx-SINGLE">Reading out the trace - RUN Nx SINGLE</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Measurements">Measurements</a></li>
@@ -164,7 +164,6 @@
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Tektronix%20AWG70002A.html">QCoDeS Example with Tektronix AWG70002A</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Tektronix%20TPS2012.html">QCoDeS Example with Tektronix TPS2012</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Yokogawa%20GS2xx.html">QCoDeS Example with Yokogawa GS200/GS210</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20ZI%20UHF-LI.html">QCoDeS Example with ZI UHF-LI</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20keithley%202450.html">QCoDeS Example with Tektronix Keithley 2450 Source Meter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%2Bbroadbean%20example%20with%20Tektronix%20AWG5208.html">QCoDeS+Broadbean Example with Tektronix AWG5208</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes-example-with-Signal-Hound-USB-SA124B.html">QCoDeS Example with Signal Hound USB-SA124B</a></li>
@@ -647,8 +646,8 @@ Connected to: Rohde&amp;Schwarz RTO (serial:1316.1000k24/400376, firmware:3.70.1
 </div>
 </div>
 </div>
-<div class="section" id="Acquisition-pt.-1-(running-continuously)">
-<h2>Acquisition pt. 1 (running continuously)<a class="headerlink" href="#Acquisition-pt.-1-(running-continuously)" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Acquisition-pt. 1-(running-continuously)">
+<h2>Acquisition pt. 1 (running continuously)<a class="headerlink" href="#Acquisition-pt. 1-(running-continuously)" title="Permalink to this headline">¶</a></h2>
 <p>The oscilloscope can run continuously or acquire a fixed number of times (or of course not run at all).</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
@@ -699,8 +698,8 @@ Connected to: Rohde&amp;Schwarz RTO (serial:1316.1000k24/400376, firmware:3.70.1
 </div>
 </div>
 </div>
-<div class="section" id="Acquisition-pt.-2-(averaging)">
-<h2>Acquisition pt. 2 (averaging)<a class="headerlink" href="#Acquisition-pt.-2-(averaging)" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Acquisition-pt. 2-(averaging)">
+<h2>Acquisition pt. 2 (averaging)<a class="headerlink" href="#Acquisition-pt. 2-(averaging)" title="Permalink to this headline">¶</a></h2>
 <p>To average on the scope, you must activate the averaging arithmetics for the relevant channel.</p>
 <p>The averaging takes place irrespective of run mode. Here, we perform 1000 averages and then stop the acquisition by acquiring NxSINGLE shots.</p>
 <p>If you average in continuous acquisition mode, you get a running average of the latest <code class="docutils literal notranslate"><span class="pre">num_acquisition</span></code> scope shots.</p>

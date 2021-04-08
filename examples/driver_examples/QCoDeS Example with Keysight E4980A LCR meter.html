@@ -67,7 +67,7 @@
             
             
               <div class="version">
-                0.23.0.dev1+196.g8f25835826
+                0.23.0.dev1+586.g9812dcfc2f
               </div>
             
           
@@ -111,7 +111,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#Step-1.-Set-up-the-E4980A’s-measurement-conditions:">Step 1. Set up the E4980A’s measurement conditions:</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#Step-2.-(optional)-Set-up-the-corrections-for-the-unit">Step 2. (optional) Set up the corrections for the unit</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#step-3.-Set-the-meausurement-function.">step 3. Set the meausurement function.</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#To-work-with-QCoDeS-&quot;Measurement&quot;:">To work with QCoDeS “Measurement”:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#To-work-with-QCoDeS-“Measurement”:">To work with QCoDeS “Measurement”:</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="QCoDeS%20Example%20with%20Yokogawa%20GS200%20and%20Keithley%207510.html">QCoDeS Example with Yokogawa GS200 and Keithley 7510 Multimeter</a></li>
@@ -158,7 +158,6 @@
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Tektronix%20AWG70002A.html">QCoDeS Example with Tektronix AWG70002A</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Tektronix%20TPS2012.html">QCoDeS Example with Tektronix TPS2012</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20Yokogawa%20GS2xx.html">QCoDeS Example with Yokogawa GS200/GS210</a></li>
-<li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20ZI%20UHF-LI.html">QCoDeS Example with ZI UHF-LI</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%20example%20with%20keithley%202450.html">QCoDeS Example with Tektronix Keithley 2450 Source Meter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes%2Bbroadbean%20example%20with%20Tektronix%20AWG5208.html">QCoDeS+Broadbean Example with Tektronix AWG5208</a></li>
 <li class="toctree-l3"><a class="reference internal" href="Qcodes-example-with-Signal-Hound-USB-SA124B.html">QCoDeS Example with Signal Hound USB-SA124B</a></li>
@@ -664,32 +663,32 @@ the voltage for measurement signal is set to be 1.5 V.
 <div class="section" id="step-3.-Set-the-meausurement-function.">
 <h2>step 3. Set the meausurement function.<a class="headerlink" href="#step-3.-Set-the-meausurement-function." title="Permalink to this headline">¶</a></h2>
 <p>User should chose one function from the follow list, for example “<strong>E4980AMeasurements.CPD</strong>”.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;CPD&quot;</span><span class="p">:</span> <span class="s2">&quot;Capacitance - Dissipation factor&quot;</span><span class="p">,</span>  <span class="p">(</span><span class="n">by</span> <span class="n">default</span><span class="p">)</span>
-<span class="s2">&quot;CPQ&quot;</span><span class="p">:</span> <span class="s2">&quot;Capacitance - Quality factor&quot;</span><span class="p">,</span>
-<span class="s2">&quot;CPG&quot;</span><span class="p">:</span> <span class="s2">&quot;Capacitance - Conductance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;CPRP&quot;</span><span class="p">:</span> <span class="s2">&quot;Capacitance - Resistance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;CSD&quot;</span><span class="p">:</span> <span class="s2">&quot;Capacitance - Dissipation factor&quot;</span><span class="p">,</span>
-<span class="s2">&quot;CSQ&quot;</span><span class="p">:</span> <span class="s2">&quot;Capacitance - Quality factor&quot;</span><span class="p">,</span>
-<span class="s2">&quot;CSRS&quot;</span><span class="p">:</span> <span class="s2">&quot;Capacitance - Resistance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;LPD&quot;</span><span class="p">:</span> <span class="s2">&quot;Inductance - Dissipation factor&quot;</span><span class="p">,</span>
-<span class="s2">&quot;LPQ&quot;</span><span class="p">:</span> <span class="s2">&quot;Inductance - Quality factor&quot;</span><span class="p">,</span>
-<span class="s2">&quot;LPG&quot;</span><span class="p">:</span> <span class="s2">&quot;Inductance - Conductance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;LPRP&quot;</span><span class="p">:</span> <span class="s2">&quot;Inductance - Resistance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;LPRD&quot;</span><span class="p">:</span> <span class="s2">&quot;Inductance - DC resistance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;LSD&quot;</span><span class="p">:</span> <span class="s2">&quot;Inductance - Dissipation factor&quot;</span><span class="p">,</span>
-<span class="s2">&quot;LSQ&quot;</span><span class="p">:</span> <span class="s2">&quot;Inductance - Quality factor&quot;</span><span class="p">,</span>
-<span class="s2">&quot;LSRS&quot;</span><span class="p">:</span> <span class="s2">&quot;Inductance - Resistance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;LSRD&quot;</span><span class="p">:</span> <span class="s2">&quot;Inductance - DC resistance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;RX&quot;</span><span class="p">:</span> <span class="s2">&quot;Resistance - Reactance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;ZTD&quot;</span><span class="p">:</span> <span class="s2">&quot;Absolute value of impedance - Theta in degree&quot;</span><span class="p">,</span>
-<span class="s2">&quot;ZTR&quot;</span><span class="p">:</span> <span class="s2">&quot;Absolute value of impedance - Theta in radiant&quot;</span><span class="p">,</span>
-<span class="s2">&quot;GB&quot;</span><span class="p">:</span> <span class="s2">&quot;Conductance - Susceptance&quot;</span><span class="p">,</span>
-<span class="s2">&quot;YTD&quot;</span><span class="p">:</span> <span class="s2">&quot;Absolute value of admittance - Theta in degree&quot;</span><span class="p">,</span>
-<span class="s2">&quot;YTR&quot;</span><span class="p">:</span> <span class="s2">&quot;Absolute value of admittance - Theta in radiant&quot;</span><span class="p">,</span>
-<span class="s2">&quot;VDID&quot;</span><span class="p">:</span> <span class="s2">&quot;DC voltage - DC current&quot;</span>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;CPD&quot;: &quot;Capacitance - Dissipation factor&quot;,  (by default)
+&quot;CPQ&quot;: &quot;Capacitance - Quality factor&quot;,
+&quot;CPG&quot;: &quot;Capacitance - Conductance&quot;,
+&quot;CPRP&quot;: &quot;Capacitance - Resistance&quot;,
+&quot;CSD&quot;: &quot;Capacitance - Dissipation factor&quot;,
+&quot;CSQ&quot;: &quot;Capacitance - Quality factor&quot;,
+&quot;CSRS&quot;: &quot;Capacitance - Resistance&quot;,
+&quot;LPD&quot;: &quot;Inductance - Dissipation factor&quot;,
+&quot;LPQ&quot;: &quot;Inductance - Quality factor&quot;,
+&quot;LPG&quot;: &quot;Inductance - Conductance&quot;,
+&quot;LPRP&quot;: &quot;Inductance - Resistance&quot;,
+&quot;LPRD&quot;: &quot;Inductance - DC resistance&quot;,
+&quot;LSD&quot;: &quot;Inductance - Dissipation factor&quot;,
+&quot;LSQ&quot;: &quot;Inductance - Quality factor&quot;,
+&quot;LSRS&quot;: &quot;Inductance - Resistance&quot;,
+&quot;LSRD&quot;: &quot;Inductance - DC resistance&quot;,
+&quot;RX&quot;: &quot;Resistance - Reactance&quot;,
+&quot;ZTD&quot;: &quot;Absolute value of impedance - Theta in degree&quot;,
+&quot;ZTR&quot;: &quot;Absolute value of impedance - Theta in radiant&quot;,
+&quot;GB&quot;: &quot;Conductance - Susceptance&quot;,
+&quot;YTD&quot;: &quot;Absolute value of admittance - Theta in degree&quot;,
+&quot;YTR&quot;: &quot;Absolute value of admittance - Theta in radiant&quot;,
+&quot;VDID&quot;: &quot;DC voltage - DC current&quot;
 </pre></div>
 </div>
-<p>Note: 1. CP vs CS: <strong>*P*</strong> means measured using parallel equivalent circuit model, and <strong>*S*</strong> means measured using series equivalent circuit model. 2. Same for LP and LS 3. RP vs RS: Equivalent <strong>*p*</strong>arallel/<strong>*s*</strong>eries resistance</p>
+<p>Note: 1. CP vs CS: <strong>P</strong> means measured using parallel equivalent circuit model, and <strong>S</strong> means measured using series equivalent circuit model. 2. Same for LP and LS 3. RP vs RS: Equivalent <strong>p</strong>arallel/<strong>s</strong>eries resistance</p>
 <p>By default, the measurement function is “CPD”, which mean “Capacitance - Dissipation factor”:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
@@ -729,7 +728,7 @@ the voltage for measurement signal is set to be 1.5 V.
 qcodes.instrument_drivers.Keysight.keysight_e4980a.MeasurementPair
 </pre></div></div>
 </div>
-<p>which has the same name as the <strong>*current*</strong> “measurement_function”:</p>
+<p>which has the same name as the <strong>current</strong> “measurement_function”:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
@@ -994,8 +993,8 @@ The capacitance  is -8.35219e-09 F.
 </pre></div></div>
 </div>
 </div>
-<div class="section" id="To-work-with-QCoDeS-&quot;Measurement&quot;:">
-<h2>To work with QCoDeS “Measurement”:<a class="headerlink" href="#To-work-with-QCoDeS-"Measurement":" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="To-work-with-QCoDeS-“Measurement”:">
+<h2>To work with QCoDeS “Measurement”:<a class="headerlink" href="#To-work-with-QCoDeS-“Measurement”:" title="Permalink to this headline">¶</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>
