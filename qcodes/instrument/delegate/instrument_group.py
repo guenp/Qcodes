@@ -18,9 +18,8 @@ class InstrumentGroup(InstrumentBase):
     Args:
         name: Name referring to this group of items
         station: Measurement station with real instruments
-        submodules_type: Class to use for creating the instruments.
         submodules: A mapping between an instrument name and the values passed
-            to the constructor of the class specified by `submodules_type`.
+            to the constructor of the class specified by `type`.
         initial_values: A mapping between the names of parameters and initial
             values to set on those parameters when loading this instrument.
         set_initial_values_on_load: Set default values on load. Defaults to
@@ -30,7 +29,6 @@ class InstrumentGroup(InstrumentBase):
         self,
         name: str,
         station: "Station",
-        submodules_type: str,
         submodules: Dict[str, Dict[str, List[str]]],
         initial_values: Dict[str, Dict[str, Any]],
         set_initial_values_on_load: bool = False,
@@ -38,12 +36,8 @@ class InstrumentGroup(InstrumentBase):
     ):
         super().__init__(name=name, **kwargs)
 
-        module_name = '.'.join(submodules_type.split('.')[:-1])
-        instr_class_name = submodules_type.split('.')[-1]
-        module = importlib.import_module(module_name)
-        instr_class = getattr(module, instr_class_name)
-
         for submodule_name, parameters in submodules.items():
+            instr_class = self._instr_class(parameters.pop("type"))
             submodule = instr_class(
                 name=submodule_name,
                 station=station,
@@ -56,6 +50,14 @@ class InstrumentGroup(InstrumentBase):
                 submodule_name,
                 submodule
             )
+
+    @staticmethod
+    def _instr_class(submodule_type: str) -> callable:
+        module_name = '.'.join(submodule_type.split('.')[:-1])
+        instr_class_name = submodule_type.split('.')[-1]
+        module = importlib.import_module(module_name)
+        instr_class = getattr(module, instr_class_name)
+        return instr_class
 
     def __repr__(self) -> str:
         submodules = ", ".join(self.submodules.keys())

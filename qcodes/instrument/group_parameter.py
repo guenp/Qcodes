@@ -8,7 +8,7 @@ should be of type :class:`GroupParameter`
 from collections import OrderedDict
 from typing import Union, Callable, Dict, Any, Optional, Sequence
 
-from qcodes.instrument.parameter import (DelegateParameter, Parameter,
+from qcodes.instrument.parameter import (Parameter,
                                          ParamRawDataType,
                                          ParamDataType)
 from qcodes.instrument.base import InstrumentBase

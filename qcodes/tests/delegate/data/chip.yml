@@ -2,9 +2,9 @@ instruments:
   MockChip_123:
     type: qcodes.instrument.delegate.InstrumentGroup
     init:
-      submodules_type: qcodes.instrument.delegate.DelegateInstrument
       submodules:
         device1:
+          type: qcodes.instrument.delegate.DelegateInstrument
           gate:
             - dac.ch01.voltage
           source:
