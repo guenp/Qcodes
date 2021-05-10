@@ -52,7 +52,7 @@ class InstrumentGroup(InstrumentBase):
             )
 
     @staticmethod
-    def _instr_class(submodule_type: str) -> Callable:
+    def _instr_class(submodule_type: Union[str, List[str]]) -> Any:
         module_name = '.'.join(submodule_type.split('.')[:-1])
         instr_class_name = submodule_type.split('.')[-1]
         module = importlib.import_module(module_name)
