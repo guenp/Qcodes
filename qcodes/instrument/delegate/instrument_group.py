@@ -29,7 +29,7 @@ class InstrumentGroup(InstrumentBase):
         self,
         name: str,
         station: "Station",
-        submodules: Dict[str, Dict[str, Union[str, List[str]]]],
+        submodules: Dict[str, Dict[str, Union[str, Any]]],
         initial_values: Dict[str, Dict[str, Any]],
         set_initial_values_on_load: bool = False,
         **kwargs: Any
@@ -52,7 +52,7 @@ class InstrumentGroup(InstrumentBase):
             )
 
     @staticmethod
-    def _instr_class(submodule_type: Union[str, List[str]]) -> Any:
+    def _instr_class(submodule_type: Union[str, Any]) -> Any:
         module_name = '.'.join(submodule_type.split('.')[:-1])
         instr_class_name = submodule_type.split('.')[-1]
         module = importlib.import_module(module_name)
