@@ -1,6 +1,6 @@
 import importlib
 
-from typing import List, Dict, Any, TYPE_CHECKING
+from typing import Callable, List, Dict, Any, TYPE_CHECKING, Union
 
 from qcodes.instrument.base import InstrumentBase
 
@@ -29,7 +29,7 @@ class InstrumentGroup(InstrumentBase):
         self,
         name: str,
         station: "Station",
-        submodules: Dict[str, Dict[str, List[str]]],
+        submodules: Dict[str, Dict[str, Union[str, List[str]]]],
         initial_values: Dict[str, Dict[str, Any]],
         set_initial_values_on_load: bool = False,
         **kwargs: Any
@@ -52,7 +52,7 @@ class InstrumentGroup(InstrumentBase):
             )
 
     @staticmethod
-    def _instr_class(submodule_type: str) -> callable:
+    def _instr_class(submodule_type: str) -> Callable:
         module_name = '.'.join(submodule_type.split('.')[:-1])
         instr_class_name = submodule_type.split('.')[-1]
         module = importlib.import_module(module_name)
